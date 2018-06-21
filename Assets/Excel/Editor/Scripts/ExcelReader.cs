@@ -11,91 +11,97 @@ namespace ExcelConverter.Excel.Editor
     {
         public static ExcelData[] GetSingleExcelData(string InExcelPath)
         {
-            List<ExcelData> datas;
-            FileInfo info = new FileInfo(InExcelPath);
-            if (info.Exists && info.Name[0] != '~'
-                && (info.Extension.Equals(".xlsx") || info.Extension.Equals(".xls")))
+            if(File.Exists(InExcelPath))
             {
-                using (FileStream stream = info.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                List<ExcelData> datas;
+                FileInfo info = new FileInfo(InExcelPath);
+                if (info.Exists && info.Name[0] != '~'
+                    && (info.Extension.Equals(".xlsx") || info.Extension.Equals(".xls")))
                 {
-                    IWorkbook book;
-
-                    if (info.Extension.Equals(".xlsx")) book = new XSSFWorkbook(stream);
-                    else book = new HSSFWorkbook(stream);
-
-                    int sheetCount = book.NumberOfSheets;
-                    datas = new List<ExcelData>(sheetCount);
-
-                    for (int i = 0; i < sheetCount; i++)
+                    using (FileStream stream = info.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     {
-                        ISheet sheet = book.GetSheetAt(i);
+                        IWorkbook book;
 
-                        int rowCount = sheet.LastRowNum + 1;
+                        if (info.Extension.Equals(".xlsx")) book = new XSSFWorkbook(stream);
+                        else book = new HSSFWorkbook(stream);
 
-                        if (rowCount >= 2)
+                        int sheetCount = book.NumberOfSheets;
+                        datas = new List<ExcelData>(sheetCount);
+
+                        for (int i = 0; i < sheetCount; i++)
                         {
-                            ExcelData data = new ExcelData();
-                            data.SheetName = sheet.SheetName.Equals("Sheet1") || sheet.SheetName.Equals("工作表1")
-                                ? info.Name.Replace(info.Extension, string.Empty) : sheet.SheetName;
+                            ISheet sheet = book.GetSheetAt(i);
 
-                            data.HeadRowLen = 3;
-                            IRow row1 = sheet.GetRow(0);
-                            IRow row2 = sheet.GetRow(1);
-                            IRow row3 = sheet.GetRow(2);
-                            int colCount = row1.LastCellNum;
-                            if (colCount == row2.LastCellNum)
+                            int rowCount = sheet.LastRowNum + 1;
+
+                            if (rowCount >= 2)
                             {
-                                data.DataColumnLen = colCount;
-                                data.Head = new ICell[3][];
-                                data.Head[0] = new ICell[colCount];
-                                data.Head[1] = new ICell[colCount];
-                                data.Head[2] = row3 == null ? null : new ICell[colCount];
+                                ExcelData data = new ExcelData();
+                                data.SheetName = sheet.SheetName.Equals("Sheet1") || sheet.SheetName.Equals("工作表1")
+                                    ? info.Name.Replace(info.Extension, string.Empty) : sheet.SheetName;
 
-                                for (int j = 0; j < colCount; ++j)
+                                IRow[] headRow = { sheet.GetRow(0), sheet.GetRow(1), sheet.GetRow(2) };
+
+                                int colCount = headRow[0].LastCellNum;
+                                if (colCount == headRow[1].LastCellNum)
                                 {
-                                    data.Head[0][j] = row1.GetCell(j);
+                                    data.DataColumnLen = colCount;
 
-                                    data.Head[1][j] = row2.GetCell(j);
+                                    //Property comment can be empty.
+                                    data.HeadRowLen = headRow[2] == null ? 2 : 3;
+                                    data.Head = new ICell[data.HeadRowLen][];
 
-                                    if (null != row3) data.Head[2][j] = row3.GetCell(j);
-                                }
-
-                                if(rowCount > 3)
-                                {
-                                    int length = rowCount - 3;
-                                    List<ICell[]> content = new List<ICell[]>(length);
-                                    IRow row;
-                                    for (int j = 0, m = 3; j < length; ++j, ++m)
+                                    for (int j = 0; j < data.HeadRowLen; j++)
                                     {
-                                        row = sheet.GetRow(m);
-                                        if (null != row)
+                                        data.Head[j] = new ICell[colCount];
+                                        for (int k = 0; k < colCount; k++)
                                         {
-                                            ICell[] cells = new ICell[colCount];
-                                            for (int k = 0; k < colCount; ++k)
-                                            {
-                                                cells[k] = row.GetCell(k);
-                                            }
-                                            content.Add(cells);
+                                            data.Head[j][k] = headRow[j].GetCell(k);
                                         }
                                     }
 
-                                    data.Body = content.ToArray();
-                                    data.BodyRowLen = content.Count;
+                                    if (rowCount > 3)
+                                    {
+                                        int length = rowCount - 3;
+                                        List<ICell[]> content = new List<ICell[]>(length);
+                                        IRow row;
+                                        for (int j = 0, m = 3; j < length; ++j, ++m)
+                                        {
+                                            row = sheet.GetRow(m);
+                                            if (null != row)
+                                            {
+                                                ICell[] cells = new ICell[colCount];
+                                                for (int k = 0; k < colCount; ++k)
+                                                {
+                                                    cells[k] = row.GetCell(k);
+                                                }
+                                                content.Add(cells);
+                                            }
+                                        }
+
+                                        data.Body = content.ToArray();
+                                        data.BodyRowLen = content.Count;
+                                    }
+
+                                    if (data.CheckData()) datas.Add(data);
                                 }
-
-                                if(data.CheckData())  datas.Add(data);
+                                else EditorUtility.DisplayDialog("Error", info.Name + "-" + sheet.SheetName + " property name and type number does not match.", "Ok");
                             }
-                            else EditorUtility.DisplayDialog("Error", info.Name + "-" + sheet.SheetName + " property name and type number does not match.", "Ok");
+                            //else if(0 != rowCount) EditorUtility.DisplayDialog("Error", info.Name + "-" + sheet.SheetName + " missing basic configuration information, property name and type.", "Ok");
                         }
-                        //else if(0 != rowCount) EditorUtility.DisplayDialog("Error", info.Name + "-" + sheet.SheetName + " missing basic configuration information, property name and type.", "Ok");
+
+                        book.Close();
+                        stream.Close();
+
+                        return datas.ToArray();
                     }
-
-                    book.Close();
-                    stream.Close();
-
-                    return datas.ToArray();
                 }
             }
+            else
+            {
+                EditorUtility.DisplayDialog("Error", "Failed to find excel file in this directory.\nPath = " + InExcelPath, "Ok");
+            }
+
             return null;
         }
     }

@@ -11,7 +11,7 @@ namespace ExcelConverter.Excel.Test
         [MenuItem("Tools/Excel/ReadTest")]
        static void ReadTest()
         {
-            string excelPath = @"D:\Unity\Self\ExcelConverter\Assets\Excel\Editor\Excel\Item.xlsx";
+            string excelPath = Application.dataPath + "/Excel/Editor/Excel/Item.xlsx";
             ExcelData[] data = ExcelReader.GetSingleExcelData(excelPath);
 
             int length = data.Length;
@@ -19,36 +19,26 @@ namespace ExcelConverter.Excel.Test
             {
                 Debug.LogError("Excel or Sheet name = " + data[i].SheetName);
 
-                for (int j = 0; j < data[i].DataColumnLen; ++j)
+                for (int j = 0; j < data[i].HeadRowLen; ++j)
                 {
                     string headStr = string.Empty;
-                    for (int k = 0; k < data[i].HeadRowLen; ++k)
+                    for (int k = 0; k < data[i].DataColumnLen; ++k)
                     {
+                        headStr += data[i].Head[j][k] + ", ";
                     }
+                    Debug.LogError(headStr);
                 }
-            }
-        }
 
-        static string getStr(string InStr, int InLen)
-        {
-            int length = InStr.Length;
-
-            if (length >= InLen) return InStr;
-            else
-            {
-                length = InLen - length;
-                for (int i = 0; i < length; ++i)
+                for (int j = 0; j < data[i].BodyRowLen; j++)
                 {
-                    InStr = " " + InStr;
+                    string bodyStr = string.Empty;
+                    for (int k = 0; k < data[i].DataColumnLen; k++)
+                    {
+                        bodyStr += data[i].Body[j][k] + ", ";
+                    }
+                    Debug.LogError(bodyStr);
                 }
             }
-            return InStr;
-        }
-
-        // Update is called once per frame
-        void Update()
-        {
-
         }
     }
 }
