@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NPOI.SS.UserModel;
 using UnityEditor;
 using UnityEngine;
@@ -52,6 +53,7 @@ namespace ExcelConverter.Excel.Editor
 
             if (Head == null || Head[0] == null || Head[1] == null) return false;
 
+            List<int> invalidRows = null, invalidClouns = null;
             //Check header definition, data can be empty but header definition cannot be null
             bool isInvalidData;
             int realDataColumnLen = DataColumnLen;
@@ -70,7 +72,8 @@ namespace ExcelConverter.Excel.Editor
                 //The column data is missing the attribute name or type and is overwritten with the left data
                 if (isInvalidData)
                 {
-                    Debug.LogError(SheetName + " 头文件中第 " + i + " 列名称或者类型为空。");
+                    if(null == invalidClouns) invalidClouns = new List<int>(realDataColumnLen - i);
+                    invalidClouns.Add(i);
 
                     --realDataColumnLen;
 
@@ -128,7 +131,9 @@ namespace ExcelConverter.Excel.Editor
 
                 if (isInvalidData)
                 {
-                    Debug.LogError(SheetName + " 数据中第 " + (i + 3 + 1) + " 行内容全部为空。");
+                    if(null == invalidRows) invalidRows = new List<int>(realBodyRowLen - i);
+                    invalidRows.Add(i + 1 + 3);//The row number index starts at 0 and the Excel index starts at 1. Header file retains three lines.
+
                     --realBodyRowLen;
                     for (int j = i; j < realBodyRowLen; ++j)
                     {
@@ -143,7 +148,7 @@ namespace ExcelConverter.Excel.Editor
             if (realDataColumnLen != DataColumnLen)
             {
                 EditorUtility.DisplayDialog("Warning",
-                    SheetName + " Part of data missing header definition is overwritten!", "Confirm");
+                    SheetName + " The second column is missing the attribute name or the type is covered by the right column", "Confirm");
 
                 DataColumnLen = realDataColumnLen;
                 for (int i = 0; i < HeadRowLen; ++i)
