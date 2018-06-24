@@ -53,7 +53,7 @@ namespace ExcelConverter.Excel.Editor
 
             if (Head == null || Head[0] == null || Head[1] == null) return false;
 
-            List<int> invalidRows = null, invalidClouns = null;
+            List<int> invalidRows = null, invalidColumns = null;
             //Check header definition, data can be empty but header definition cannot be null
             bool isInvalidData;
             int realDataColumnLen = DataColumnLen;
@@ -72,8 +72,8 @@ namespace ExcelConverter.Excel.Editor
                 //The column data is missing the attribute name or type and is overwritten with the left data
                 if (isInvalidData)
                 {
-                    if(null == invalidClouns) invalidClouns = new List<int>(realDataColumnLen - i);
-                    invalidClouns.Add(i);
+                    if(null == invalidColumns) invalidColumns = new List<int>(realDataColumnLen - i);
+                    invalidColumns.Add(i + invalidColumns.Count);
 
                     --realDataColumnLen;
 
@@ -132,7 +132,7 @@ namespace ExcelConverter.Excel.Editor
                 if (isInvalidData)
                 {
                     if(null == invalidRows) invalidRows = new List<int>(realBodyRowLen - i);
-                    invalidRows.Add(i + 1 + 3);//The row number index starts at 0 and the Excel index starts at 1. Header file retains three lines.
+                    invalidRows.Add(i + 1 + 3 + invalidRows.Count);//The row number index starts at 0 and the Excel index starts at 1. Header file retains three lines.
 
                     --realBodyRowLen;
                     for (int j = i; j < realBodyRowLen; ++j)
@@ -147,8 +147,16 @@ namespace ExcelConverter.Excel.Editor
 
             if (realDataColumnLen != DataColumnLen)
             {
+                string columnIndexes = "[";
+                int count = invalidColumns.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    columnIndexes += (char)('A' + invalidColumns[i]) + " ";
+                }
+                columnIndexes += "]";
+
                 EditorUtility.DisplayDialog("Warning",
-                    SheetName + " The second column is missing the attribute name or the type is covered by the right column", "Confirm");
+                                            SheetName + " The " + columnIndexes + " column is missing the attribute name or the type is covered by the right column", "Confirm");
 
                 DataColumnLen = realDataColumnLen;
                 for (int i = 0; i < HeadRowLen; ++i)
@@ -164,8 +172,16 @@ namespace ExcelConverter.Excel.Editor
 
             if (realBodyRowLen != BodyRowLen)
             {
+                string rowIndexes = "[";
+                int count = invalidRows.Count;
+                for (int i = 0; i < count; i++)
+                {
+                    rowIndexes += invalidRows[i] + " ";
+                }
+                rowIndexes += "]";
+
                 EditorUtility.DisplayDialog("Warning",
-                   "All data in a row in the " + SheetName +" is the default value and has been ignored.", "Confirm");
+                                            "All data in " + rowIndexes + " rows in the " + SheetName +" is the default value and has been ignored.", "Confirm");
 
                 BodyRowLen = realBodyRowLen;
 
