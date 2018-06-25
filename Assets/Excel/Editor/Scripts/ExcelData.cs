@@ -72,7 +72,7 @@ namespace ExcelConverter.Excel.Editor
                 //The column data is missing the attribute name or type and is overwritten with the left data
                 if (isInvalidData)
                 {
-                    if(null == invalidColumns) invalidColumns = new List<int>(realDataColumnLen - i);
+                    if (null == invalidColumns) invalidColumns = new List<int>(realDataColumnLen - i);
                     invalidColumns.Add(i + invalidColumns.Count);
 
                     --realDataColumnLen;
@@ -131,7 +131,7 @@ namespace ExcelConverter.Excel.Editor
 
                 if (isInvalidData)
                 {
-                    if(null == invalidRows) invalidRows = new List<int>(realBodyRowLen - i);
+                    if (null == invalidRows) invalidRows = new List<int>(realBodyRowLen - i);
                     invalidRows.Add(i + 1 + 3 + invalidRows.Count);//The row number index starts at 0 and the Excel index starts at 1. Header file retains three lines.
 
                     --realBodyRowLen;
@@ -161,7 +161,7 @@ namespace ExcelConverter.Excel.Editor
                 DataColumnLen = realDataColumnLen;
                 for (int i = 0; i < HeadRowLen; ++i)
                 {
-                   Array.Resize(ref Head[i], DataColumnLen);
+                    Array.Resize(ref Head[i], DataColumnLen);
                 }
 
                 for (int i = 0; i < realDataColumnLen; ++i)
@@ -181,7 +181,7 @@ namespace ExcelConverter.Excel.Editor
                 rowIndexes += "]";
 
                 EditorUtility.DisplayDialog("Warning",
-                                            "All data in " + rowIndexes + " rows in the " + SheetName +" is the default value and has been ignored.", "Confirm");
+                                            "All data in " + rowIndexes + " rows in the " + SheetName + " is the default value and has been ignored.", "Confirm");
 
                 BodyRowLen = realBodyRowLen;
 
@@ -192,6 +192,32 @@ namespace ExcelConverter.Excel.Editor
             Debug.LogError("Body row = " + Body.Length + "    Cloumn = " + Body[0].Length);
 
             return true;
+        }
+
+        public override string ToString()
+        {
+            string info = "Excel or Sheet name = " + SheetName;
+
+            for (int j = 0; j < HeadRowLen; ++j)
+            {
+                string headStr = string.Empty;
+                for (int k = 0; k < DataColumnLen; ++k)
+                {
+                    headStr += Head[j][k] + ", ";
+                }
+                info += "\n" + headStr;
+            }
+
+            for (int j = 0; j < BodyRowLen; j++)
+            {
+                string bodyStr = string.Empty;
+                for (int k = 0; k < DataColumnLen; k++)
+                {
+                    bodyStr += Body[j][k] + ", ";
+                }
+                info += "\n" + bodyStr;
+            }
+            return info;
         }
     }
 }
