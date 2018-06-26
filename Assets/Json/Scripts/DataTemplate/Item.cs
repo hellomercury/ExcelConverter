@@ -16,14 +16,14 @@ namespace ExcelConverter.Json.DataTemplate
 
         }
 
-        public Item(JsonData InSingleData)
+        public Item(JsonData InJsonArray)
         {
-            ID = (int)InSingleData["ID"];
-            Name = (string)InSingleData["Name"];
-            Icon = (string)InSingleData["Icon"];
-            PileUpperLimit = (int)InSingleData["PileUpperLimit"];
-            ItemBuyInfo = (int)InSingleData["ItemBuyInfo"];
-            UnlockInfo = (int)InSingleData["UnlockInfo"];
+            ID = (int)InJsonArray[0];
+            Name = (string)InJsonArray[1];
+            Icon = (string)InJsonArray[2];
+            PileUpperLimit = (int)InJsonArray[3];
+            ItemBuyInfo = (int)InJsonArray[4];
+            UnlockInfo = (int)InJsonArray[5];
         }
 
         public override string ToString()
